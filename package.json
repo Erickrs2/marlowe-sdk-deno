@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "@marlowe.io/runtime-core": "^0.3.0-beta"
+    "@marlowe.io/runtime-core": "^0.3.0-beta",
+    "fp-ts": "^2.16.2",
+    "prettier": "^3.2.5"
   }
 }
