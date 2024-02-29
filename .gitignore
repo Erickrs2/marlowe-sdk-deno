@@ -10,5 +10,4 @@ _fresh/
 # npm dependencies
 node_modules/
 
-#initialize
-initialize_env.ts
+
