@@ -10,12 +10,14 @@ import {
   Environment,
   IChoice,
   Input,
+  lovelace,
   MarloweState,
   mkEnvironment,
   Party,
   Timeout,
   timeoutToDate,
   TokenValue,
+  Value,
 } from "npm:@marlowe.io/language-core-v1";
 
 import {
@@ -29,25 +31,53 @@ import * as O from "npm:fp-ts/Option";
 import { pipe } from "npm:fp-ts/function";
 
 /**
- * Initialize Contract Playground.
- * @param {number} x
- * @param {number} y
- * @returns {Contract} Contract
+ * Request For Creating a Vesting Marlowe Contract
+ * @category Vesting Request
  */
-export function mkContract (x: number, y: number): Contract {
+export type VestingRequest = {
+  /**
+   * The party definition of the Token Provider (Role token or a Cardano Address)
+   */
+  provider: Party;
+  /**
+   * The party definition of the Token Provider (Role token or a Cardano Address)
+   */
+  claimer: Party;
+  /**
+   * Last day that the provider can deposit)
+   */
+  startTimeout: Date;
+  /**
+   * amount the provider will deposit)
+   */
+  amount: Value;
+};
+
+/**
+ * Function to initialize the playground contract * 
+ * @returns {Contract} Contract Playground
+ * @category Vesting Contract DSL Generation
+ */
+export function mkContract(
+  request: VestingRequest,
+): Contract {
+  const start = datetoTimeout(request.startTimeout);
+  const vestingDate = start + (1n * 60n * 60n * 1000n);
+  const expirationDate = vestingDate + (1n * 60n * 60n * 1000n);
+
   const contract: Contract = {
     when: [
       {
         then: {
           when: [
             {
-              then: "close",
+              then: close,
               case: {
                 for_choice: {
-                  choice_owner: { address: "provider" },
+                  choice_owner: request.provider,
                   choice_name: "cancel",
                 },
-                choose_between: [{ to: 0, from: 0 }],
+                choose_between: [{ to: 0n, from: 0n }],
               },
             },
           ],
@@ -55,49 +85,47 @@ export function mkContract (x: number, y: number): Contract {
             when: [
               {
                 then: {
-                  token: { token_name: "", currency_symbol: "" },
-                  to: { account: { address: "withdraw" } },
+                  token: lovelace,
+                  to: { account: request.claimer },
                   then: "close",
-                  pay: 5000000,
-                  from_account: { address: "provider" },
+                  pay: request.amount,
+                  from_account: request.provider,
                 },
                 case: {
                   for_choice: {
-                    choice_owner: { address: "withdraw" },
+                    choice_owner: request.claimer,
                     choice_name: "withdraw",
                   },
-                  choose_between: [{ to: 0, from: 0 }],
+                  choose_between: [{ to: 0n, from: 0n }],
                 },
               },
               {
-                then: "close",
+                then: close,
                 case: {
                   for_choice: {
-                    choice_owner: { address: "provider" },
+                    choice_owner: request.provider,
                     choice_name: "cancel2",
                   },
-                  choose_between: [{ to: 1, from: 1 }],
+                  choose_between: [{ to: 1n, from: 1n }],
                 },
               },
             ],
-            timeout_continuation: "close",
-            timeout: 1709249184696,
+            timeout_continuation: close,
+            timeout: expirationDate,
           },
-          timeout: 1709247384696,
+          timeout: vestingDate,
         },
         case: {
-          party: { address: "provider" },
-          of_token: { token_name: "", currency_symbol: "" },
-          into_account: { address: "provider" },
-          deposits: 5000000,
+          party: request.provider,
+          of_token: lovelace,
+          into_account: request.claimer,
+          deposits: request.amount,
         },
       },
     ],
-    timeout_continuation: "close",
-    timeout: 1709250984696,
+    timeout_continuation: close,
+    timeout: start,
   };
 
-  return contract
+  return contract;
 }
-
-
