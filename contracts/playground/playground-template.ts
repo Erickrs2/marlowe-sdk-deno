@@ -1,4 +1,6 @@
 //deno run -A ./contracts/playground/playground-template.ts
+//deno doc --html --name="Playground" ./contracts/playground/playground-template.ts
+// deno-lint-ignore-file
 
 import {
   Case,
@@ -23,10 +25,17 @@ import {
   Next,
 } from "npm:@marlowe.io/language-core-v1/next";
 import * as G from "npm:@marlowe.io/language-core-v1/guards";
-import * as O from "fp-ts/lib/Option.js";
-import { pipe } from "fp-ts/lib/function.js";
+import * as O from "npm:fp-ts/Option";
+import { pipe } from "npm:fp-ts/function";
 
-const contract: Contract = {
+/**
+ * Initialize Contract Playground.
+ * @param {number} x
+ * @param {number} y
+ * @returns {Contract} Contract
+ */
+export function mkContract (x: number, y: number): Contract {
+  const contract: Contract = {
     when: [
       {
         then: {
@@ -88,4 +97,7 @@ const contract: Contract = {
     timeout: 1709250984696,
   };
 
-  console.log(contract.when[0].case)
+  return contract
+}
+
+

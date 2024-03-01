@@ -1,7 +1,12 @@
 {
   "dependencies": {
+    "@marlowe.io/language-core-v1": "^0.3.0-beta",
     "@marlowe.io/runtime-core": "^0.3.0-beta",
+    "@marlowe.io/runtime-lifecycle": "^0.3.0-beta",
+    "@marlowe.io/runtime-rest-client": "^0.3.0-beta",
+    "@marlowe.io/wallet": "^0.3.0-beta",
     "fp-ts": "^2.16.2",
+    "lucid-cardano": "^0.10.7",
     "prettier": "^3.2.5"
   }
 }
