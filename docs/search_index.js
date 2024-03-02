@@ -1,3 +1,3 @@
 (function () {
-  window.DENO_DOC_SEARCH_INDEX = {"nodes":[{"kind":["typeAlias"],"name":"VestingRequest","file":".","location":{"filename":"main","line":38,"col":0,"byteIndex":847},"declarationKind":"export","deprecated":false},{"kind":["function"],"name":"mkContract","file":".","location":{"filename":"main","line":62,"col":0,"byteIndex":1403},"declarationKind":"export","deprecated":false}]};
+  window.DENO_DOC_SEARCH_INDEX = {"nodes":[{"kind":["interface"],"name":"VestingRequest","file":".","location":{"filename":"","line":37,"col":0,"byteIndex":730},"declarationKind":"export","deprecated":false},{"kind":["interface"],"name":"VestingScheme","file":".","location":{"filename":"","line":56,"col":0,"byteIndex":1117},"declarationKind":"export","deprecated":false},{"kind":["function"],"name":"mkContract","file":".","location":{"filename":"","line":73,"col":0,"byteIndex":1457},"declarationKind":"export","deprecated":false}]};
 })()

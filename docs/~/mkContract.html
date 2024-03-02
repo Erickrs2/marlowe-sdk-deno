@@ -52,7 +52,7 @@
 </label>
 </div>
 <div class="space-y-2 max-lg:hidden peer-checked:block"><div>
-        <h3 class="subtitle">Vesting Contract DSL Generation</h3>
+        <h3 class="subtitle">Vesting Contract Generation</h3>
         <ul><li>
             <a href="..&#x2F;.&#x2F;.&#x2F;~&#x2F;mkContract.html" title="mkContract" class="active "><div class="flex justify-end compound_types w-[2.125rem] shrink-0"><div class="text-Function bg-Function/15 rounded-full size-5 font-medium text-xs leading-5 text-center align-middle shrink-0 select-none font-mono" title="Function">f</div></div>
 <span >mkContract</span>
@@ -61,8 +61,12 @@
       </div><div>
         <h3 class="subtitle">Vesting Request</h3>
         <ul><li>
-            <a href="..&#x2F;.&#x2F;.&#x2F;~&#x2F;VestingRequest.html" title="VestingRequest" class=" "><div class="flex justify-end compound_types w-[2.125rem] shrink-0"><div class="text-TypeAlias bg-TypeAlias/15 rounded-full size-5 font-medium text-xs leading-5 text-center align-middle shrink-0 select-none font-mono" title="Type Alias">T</div></div>
+            <a href="..&#x2F;.&#x2F;.&#x2F;~&#x2F;VestingRequest.html" title="VestingRequest" class=" "><div class="flex justify-end compound_types w-[2.125rem] shrink-0"><div class="text-Interface bg-Interface/15 rounded-full size-5 font-medium text-xs leading-5 text-center align-middle shrink-0 select-none font-mono" title="Interface">I</div></div>
 <span >VestingRequest</span>
+            </a>
+          </li><li>
+            <a href="..&#x2F;.&#x2F;.&#x2F;~&#x2F;VestingScheme.html" title="VestingScheme" class=" "><div class="flex justify-end compound_types w-[2.125rem] shrink-0"><div class="text-Interface bg-Interface/15 rounded-full size-5 font-medium text-xs leading-5 text-center align-middle shrink-0 select-none font-mono" title="Interface">I</div></div>
+<span >VestingScheme</span>
             </a>
           </li></ul>
       </div></div>
@@ -76,7 +80,7 @@
             <span class="text-Function">function</span>&nbsp;<span class="font-bold">mkContract</span>
           </div></div><a
   class="relative rounded p-1.5 cursor-pointer mr-2 border hover:bg-stone-300"
-  href="file:&#x2F;&#x2F;&#x2F;home&#x2F;erick&#x2F;next-projects&#x2F;marlowe-sdk-deno&#x2F;contracts&#x2F;playground&#x2F;playground-template.ts"><svg
+  href="file:&#x2F;&#x2F;&#x2F;home&#x2F;erick&#x2F;next-projects&#x2F;marlowe-sdk-deno&#x2F;contracts&#x2F;playground&#x2F;playground-implementation.ts"><svg
   width="14"
   height="14"
   viewBox="0 0 14 14"
@@ -99,7 +103,7 @@
   />
 </svg>
 </a>
-</div><div><style scoped></style>
+</div><div class="p-4 mb-4 border-2 rounded-lg bg-stone-50 border-stone-200 usage"><style scoped></style>
 
     <input type="radio" name="usage" id="" class="hidden"checked/><nav class="hidden border-b border-gray-300 flex gap-1 flex-row mb-2"><label for="" class="md:px-4 px-2 py-1 text-sm md:text-base leading-none rounded-t-md md:hover:bg-gray-100 md:hover:border-b-2">
         
@@ -124,13 +128,13 @@
 }
 </style>
   <input type="radio" name="function_mkContract" id="function_mkContract_0" checked /><div class="space-y-2"><label for="function_mkContract_0" class="space-y-1 block px-4 py-2.5 rounded-lg border border-stone-300 cursor-pointer hover:bg-stone-100"><code class="text-sm">
-        <span class="font-bold">mkContract</span><span class="font-medium">(<span><span><span class="italic">unnamed 0</span><span>: <a href="..&#x2F;.&#x2F;.&#x2F;~&#x2F;VestingRequest.html" class="link">VestingRequest</a></span></span></span>)<span>: <span>Contract</span></span></span>
+        <span class="font-bold">mkContract</span><span class="font-medium">(<span><span>request<span>: <a href="..&#x2F;.&#x2F;.&#x2F;~&#x2F;VestingRequest.html" class="link">VestingRequest</a></span></span></span>)<span>: <span>Contract</span></span></span>
       </code></label></div>
 
-<div class="mt-3"><div class="space-y-7" id="function_mkContract_0_div"><div class="markdown flex-1"><p>Function to initialize the playground contract *</p>
+<div class="mt-3"><div class="space-y-7" id="function_mkContract_0_div"><div class="markdown flex-1"><p>Function to initialize the playground contract</p>
 </div><div>
-  <h2 class="text-xl leading-6 font-semibold py-1 mb-4">Parameters</h2><div class="ml-2 space-y-3"><div class="anchorable text-sm" id="function_mkContract_0_parameters_(unnamed 0)"><a
-  href="#function_mkContract_0_parameters_(unnamed 0)"
+  <h2 class="text-xl leading-6 font-semibold py-1 mb-4">Parameters</h2><div class="ml-2 space-y-3"><div class="anchorable text-sm" id="function_mkContract_0_parameters_request"><a
+  href="#function_mkContract_0_parameters_request"
   class="anchor float-left leading-none hidden text-stone-600 ml-[-24px] p-1 pr-1 pt-1 top-0 bottom-0"
   aria-label="Anchor"
   tabIndex=-1
@@ -158,11 +162,11 @@
 </a>
 <div class="flex justify-between items-start">
     <span class="flex items-center break-words gap-2"><code>
-        <span class="font-bold"><span class="italic">unnamed 0</span></span><span class="font-medium"><span>: <a href="..&#x2F;.&#x2F;.&#x2F;~&#x2F;VestingRequest.html" class="link">VestingRequest</a></span></span>
+        <span class="font-bold">request</span><span class="font-medium"><span>: <a href="..&#x2F;.&#x2F;.&#x2F;~&#x2F;VestingRequest.html" class="link">VestingRequest</a></span></span>
       </code>
     </span><a
   class="relative rounded p-1.5 cursor-pointer mr-2 border hover:bg-stone-300"
-  href="file:&#x2F;&#x2F;&#x2F;home&#x2F;erick&#x2F;next-projects&#x2F;marlowe-sdk-deno&#x2F;contracts&#x2F;playground&#x2F;playground-template.ts"><svg
+  href="file:&#x2F;&#x2F;&#x2F;home&#x2F;erick&#x2F;next-projects&#x2F;marlowe-sdk-deno&#x2F;contracts&#x2F;playground&#x2F;playground-implementation.ts"><svg
   width="14"
   height="14"
   viewBox="0 0 14 14"
@@ -221,7 +225,7 @@
       </code>
     </span><a
   class="relative rounded p-1.5 cursor-pointer mr-2 border hover:bg-stone-300"
-  href="file:&#x2F;&#x2F;&#x2F;home&#x2F;erick&#x2F;next-projects&#x2F;marlowe-sdk-deno&#x2F;contracts&#x2F;playground&#x2F;playground-template.ts"><svg
+  href="file:&#x2F;&#x2F;&#x2F;home&#x2F;erick&#x2F;next-projects&#x2F;marlowe-sdk-deno&#x2F;contracts&#x2F;playground&#x2F;playground-implementation.ts"><svg
   width="14"
   height="14"
   viewBox="0 0 14 14"
@@ -244,8 +248,7 @@
   />
 </svg>
 </a>
-</div><div class="markdown_border"><div class="markdown flex-1"><p>Contract Playground</p>
-</div></div></div>
+</div></div>
 </div></div>
 </div>
 </div>

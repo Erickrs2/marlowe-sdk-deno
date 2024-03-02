@@ -1,5 +1,5 @@
 //deno run -A ./contracts/playground/playground-template.ts
-//deno doc --html --name="Playground" ./contracts/playground/playground-template.ts
+//deno doc --html --name="Playground" ./contracts/playground/playground-implementation.ts
 // deno-lint-ignore-file
 
 import {
@@ -31,18 +31,29 @@ import * as O from "npm:fp-ts/Option";
 import { pipe } from "npm:fp-ts/function";
 
 /**
- * Request For Creating a Vesting Marlowe Contract
+ * Contract request object
  * @category Vesting Request
  */
-export type VestingRequest = {
+export interface VestingRequest {
   /**
-   * The party definition of the Token Provider (Role token or a Cardano Address)
+   * The party definition of the Token Provider (Role token or a Cardano * Address)
    */
   provider: Party;
   /**
-   * The party definition of the Token Provider (Role token or a Cardano Address)
+   * The party definition of the Token Provider (Role token or a Cardano * Address)
    */
   claimer: Party;
+  /**
+   * Vesting Scheme
+   */
+  scheme: VestingScheme;
+}
+
+/**
+ * Contract request object
+ * @category Vesting Request
+ */
+export interface VestingScheme {
   /**
    * Last day that the provider can deposit)
    */
@@ -51,17 +62,18 @@ export type VestingRequest = {
    * amount the provider will deposit)
    */
   amount: Value;
-};
+}
 
 /**
- * Function to initialize the playground contract * 
- * @returns {Contract} Contract Playground
- * @category Vesting Contract DSL Generation
+ * Function to initialize the playground contract
+ * @param {request} VestingRequest
+ * @returns {Contract}
+ * @category Vesting Contract Generation
  */
 export function mkContract(
   request: VestingRequest,
 ): Contract {
-  const start = datetoTimeout(request.startTimeout);
+  const start = datetoTimeout(request.scheme.startTimeout);
   const vestingDate = start + (1n * 60n * 60n * 1000n);
   const expirationDate = vestingDate + (1n * 60n * 60n * 1000n);
 
@@ -88,7 +100,7 @@ export function mkContract(
                   token: lovelace,
                   to: { account: request.claimer },
                   then: "close",
-                  pay: request.amount,
+                  pay: request.scheme.amount,
                   from_account: request.provider,
                 },
                 case: {
@@ -119,7 +131,7 @@ export function mkContract(
           party: request.provider,
           of_token: lovelace,
           into_account: request.claimer,
-          deposits: request.amount,
+          deposits: request.scheme.amount,
         },
       },
     ],
