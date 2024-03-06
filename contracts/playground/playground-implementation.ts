@@ -1,4 +1,4 @@
-//deno run -A ./contracts/playground/playground-template.ts
+//deno run -A ./contracts/playground/playground-implementation.ts
 //deno doc --html --name="Playground" ./contracts/playground/playground-implementation.ts
 // deno-lint-ignore-file
 
@@ -27,8 +27,9 @@ import {
   Next,
 } from "npm:@marlowe.io/language-core-v1/next";
 import * as G from "npm:@marlowe.io/language-core-v1/guards";
-import * as O from "npm:fp-ts/Option";
-import { pipe } from "npm:fp-ts/function";
+import * as O from "fp-ts/Option.ts";
+import { pipe } from "fp-ts/function";
+import * as fpTs from "https://deno.land/x/fp_ts@v2.11.4/mod.ts";
 
 /**
  * Contract request object
@@ -73,8 +74,8 @@ export interface VestingScheme {
 export function mkContract(
   request: VestingRequest,
 ): Contract {
-  const start = datetoTimeout(request.scheme.startTimeout);
-  const vestingDate = start + (1n * 60n * 60n * 1000n);
+  const startLimit = datetoTimeout(request.scheme.startTimeout);
+  const vestingDate = startLimit + (1n * 60n * 60n * 1000n);
   const expirationDate = vestingDate + (1n * 60n * 60n * 1000n);
 
   const contract: Contract = {
@@ -136,8 +137,24 @@ export function mkContract(
       },
     ],
     timeout_continuation: close,
-    timeout: start,
+    timeout: startLimit,
   };
 
   return contract;
+}
+
+export const getVestingState = async (
+  scheme: VestingScheme,
+  stateOpt: fpTs.option<MarloweState>,
+  inputHistory: Input[],
+  getNext: (environment: Environment) => Promise<Next>
+) => {
+  const state = fpTs.function.pipe(
+    stateOpt,
+    fpTs.OptionT.match(
+      () => null,
+      (a) => a
+    )
+  );
+  console.log(state)
 }

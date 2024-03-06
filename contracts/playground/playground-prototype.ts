@@ -12,15 +12,25 @@ import { VestingRequest } from "./playground-implementation.ts";
 import {
   addressBech32,
   ContractId,
+  contractId,
   stakeAddressBech32,
   Tags,
 } from "@marlowe.io/runtime-core";
+import {
+  Choice,
+  Deposit,
+  emptyApplicables,
+  Next,
+} from "@marlowe.io/language-core-v1/next";
 import {
   datetoTimeout,
   Environment,
   Input,
 } from "@marlowe.io/language-core-v1";
 import { VestingScheme } from "@/contracts/playground/playground-implementation.ts";
+import { getApplicableActions } from "../experimental-features/applicable-inputs.ts";
+import { getVestingState } from "@/contracts/playground/playground-implementation.ts";
+
 const projectId = Deno.env.get("PROJECTID");
 
 //Eternl and Nami wallet
@@ -54,6 +64,7 @@ const lucid = await Lucid.new(
   "Preprod",
 );
 lucid.selectWalletFromSeed(seedPhrase!);
+// @ts-ignore
 const wallet = mkLucidWallet(lucid);
 const lifecycle = mkRuntimeLifecycle({
   runtimeURL,
@@ -69,22 +80,20 @@ const addresses = await lifecycle.wallet.getUsedAddresses();
 const address = addresses[0];
 
 //setting the parameters
-const tenMinutesInMillisecondsTemp = 10 * 60 * 1000;
-const now = new Date(Date.now() + tenMinutesInMillisecondsTemp,
-);
+// const startTimeout = new Date(Date.now() + 1 * 60 * 60 * 1000);
 
-const requestScheme: VestingScheme = {
-  startTimeout: now,
-  amount: amount * 1000000n,
-};
+// const requestScheme: VestingScheme = {
+//   startTimeout: startTimeout,
+//   amount: amount * 1000000n,
+// };
 
-const request: VestingRequest = {
-  provider: { "address": address },
-  claimer: {
-    "address": claimer,
-  },
-  scheme: requestScheme,
-};
+// const request: VestingRequest = {
+//   provider: { "address": address },
+//   claimer: {
+//     "address": claimer,
+//   },
+//   scheme: requestScheme,
+// };
 
 // deploy smart contract
 // const vestingContract = mkContract(request);
@@ -105,8 +114,10 @@ const request: VestingRequest = {
 // console.log("Contract ID: ", contractId);
 // console.log("Transaction ID: ", txIdCreated);
 
+// @ts-ignore
 //get contracts IDs and Tags
 const contractIdsAndTags: [ContractId, Tags][] = (await restAPI.getContracts({
+  // @ts-ignore
   partyAddresses: addresses,
   tags: [tag],
 }))
@@ -119,22 +130,25 @@ const contractIdsAndDetails: [ContractId, Tags, ContractDetails][] =
   await Promise.all(
     contractIdsAndTags.map(([contractId, tags]) =>
       restAPI
+        // @ts-ignore
         .getContractById(contractId)
         .then((details) =>
           [contractId, tags, details] as [ContractId, Tags, ContractDetails]
         )
     ),
-  );
+  ) as [ContractId, Tags, ContractDetails][];
 
 //get contract Ids, Tags and Input History
 const contractIdsAndDetailsAndInputHistory = await Promise.all(
   contractIdsAndDetails.map(([contractId, tags, details]) =>
     restAPI
+      // @ts-ignore
       .getTransactionsForContract(contractId)
       .then((result) =>
         Promise.all(
           result.transactions.map((txHeader) =>
             restAPI.getContractTransactionById(
+              // @ts-ignore
               contractId,
               txHeader.transactionId,
             )
@@ -155,24 +169,53 @@ const contractIdsAndDetailsAndInputHistory = await Promise.all(
   ),
 );
 
-const nowTime = datetoTimeout(new Date(Date.now()));
-const tenMinutesInMilliseconds = 1 * 60 * 1000;
-const inTenMinutes = datetoTimeout(
-  new Date(Date.now() + tenMinutesInMilliseconds),
-);
-const env: Environment = {
-  timeInterval: { from: nowTime, to: inTenMinutes },
-};
-
 const allContracts = await Promise.all(
   contractIdsAndDetailsAndInputHistory.map((
     [contractId, tags, details, inputHistory],
   ) =>
-    lifecycle.contracts.getApplicableInputs(
-      contractId,
-      env,
+    getVestingState(
+      tags[tag].scheme,
+      details.state,
+      inputHistory,
+      (environment) =>
+        lifecycle.contracts.getApplicableInputs(
+          // @ts-ignore
+          contractId,
+          environment,
+        ),
     )
   ),
 );
 
-console.log(allContracts)
+console.log(allContracts);
+
+// const nowTime = datetoTimeout(new Date(Date.now()));
+// const inOneMinute = datetoTimeout(
+//   new Date(Date.now() + 1 * 60 * 1000),
+// );
+// const env: Environment = {
+//   timeInterval: { from: nowTime, to: inOneMinute },
+// };
+
+// const allContracts = await Promise.all(
+//   contractIdsAndDetailsAndInputHistory.map((
+//     [contractId, tags, details, inputHistory],
+//   ) =>
+//     lifecycle.contracts.getApplicableInputs(
+//       // @ts-ignore
+//       contractId,
+//       env,
+//     )
+//       .then((applicables) =>
+//         [contractId, tags, details, inputHistory, applicables] as [
+//           ContractId,
+//           Tags,
+//           ContractDetails,
+//           Input[],
+//           Next,
+//         ]
+//       )
+//   ),
+// );
+
+// console.log(allContracts);
