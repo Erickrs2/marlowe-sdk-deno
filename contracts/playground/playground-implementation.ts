@@ -26,10 +26,8 @@ import {
   emptyApplicables,
   Next,
 } from "npm:@marlowe.io/language-core-v1/next";
-import * as G from "npm:@marlowe.io/language-core-v1/guards";
-import * as O from "fp-ts/Option.ts";
-import { pipe } from "fp-ts/function";
 import * as fpTs from "https://deno.land/x/fp_ts@v2.11.4/mod.ts";
+import * as O from "https://deno.land/x/fp_ts@v2.11.4/Option.ts";
 
 /**
  * Contract request object
@@ -143,18 +141,19 @@ export function mkContract(
   return contract;
 }
 
-export const getVestingState = async (
+export const getVestingState = (
   scheme: VestingScheme,
-  stateOpt: fpTs.option<MarloweState>,
+  stateOpt: O.Option<MarloweState>,
   inputHistory: Input[],
-  getNext: (environment: Environment) => Promise<Next>
+  getNext: (environment: Environment) => Promise<Next>,
 ) => {
   const state = fpTs.function.pipe(
-    stateOpt,
-    fpTs.OptionT.match(
+    O.some(stateOpt),
+    O.match(
       () => null,
       (a) => a
-    )
+    ),
   );
-  console.log(state)
-}
+
+  return state;
+};

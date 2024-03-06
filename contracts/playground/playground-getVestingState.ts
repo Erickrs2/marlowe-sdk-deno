@@ -1,4 +1,4 @@
-// deno run -A ./contracts/playground/playground-prototype.ts
+// deno run -A ./contracts/playground/playground-getVestingState.ts
 // deno-lint-ignore-file
 
 import { Blockfrost, Lucid } from "lucid-cardano";
@@ -7,28 +7,13 @@ import { mkRuntimeLifecycle } from "@marlowe.io/runtime-lifecycle";
 import { mkRestClient } from "@marlowe.io/runtime-rest-client";
 import { ContractDetails } from "@marlowe.io/runtime-rest-client/contract/details";
 import "$std/dotenv/load.ts";
-import { mkContract } from "./playground-implementation.ts";
-import { VestingRequest } from "./playground-implementation.ts";
 import {
   addressBech32,
   ContractId,
-  contractId,
   stakeAddressBech32,
   Tags,
 } from "@marlowe.io/runtime-core";
-import {
-  Choice,
-  Deposit,
-  emptyApplicables,
-  Next,
-} from "@marlowe.io/language-core-v1/next";
-import {
-  datetoTimeout,
-  Environment,
-  Input,
-} from "@marlowe.io/language-core-v1";
-import { VestingScheme } from "@/contracts/playground/playground-implementation.ts";
-import { getApplicableActions } from "../experimental-features/applicable-inputs.ts";
+import { Input } from "@marlowe.io/language-core-v1";
 import { getVestingState } from "@/contracts/playground/playground-implementation.ts";
 
 const projectId = Deno.env.get("PROJECTID");
@@ -49,9 +34,6 @@ const claimer = addressBech32(
 
 //set TAG
 const tag = "vesting-contract";
-
-//set amount
-const amount = 10n;
 
 //initialize the runtime
 const runtimeURL =
@@ -78,41 +60,6 @@ const rewardAddress = rewardAddressStr
   : undefined;
 const addresses = await lifecycle.wallet.getUsedAddresses();
 const address = addresses[0];
-
-//setting the parameters
-// const startTimeout = new Date(Date.now() + 1 * 60 * 60 * 1000);
-
-// const requestScheme: VestingScheme = {
-//   startTimeout: startTimeout,
-//   amount: amount * 1000000n,
-// };
-
-// const request: VestingRequest = {
-//   provider: { "address": address },
-//   claimer: {
-//     "address": claimer,
-//   },
-//   scheme: requestScheme,
-// };
-
-// deploy smart contract
-// const vestingContract = mkContract(request);
-// const [contractId, txIdCreated] = await lifecycle.contracts.createContract({
-//   contract: vestingContract,
-//   tags: {
-//     [tag]: {
-//       title: "Vesting Contract",
-//       firstName: "John",
-//       lastName: "Doe",
-//       providerId: address.slice(0,18),
-//       claimerId: claimer.slice(0,18),
-//       scheme: request.scheme
-//     },
-//   },
-// });
-
-// console.log("Contract ID: ", contractId);
-// console.log("Transaction ID: ", txIdCreated);
 
 // @ts-ignore
 //get contracts IDs and Tags
@@ -172,8 +119,8 @@ const contractIdsAndDetailsAndInputHistory = await Promise.all(
 const allContracts = await Promise.all(
   contractIdsAndDetailsAndInputHistory.map((
     [contractId, tags, details, inputHistory],
-  ) =>
-    getVestingState(
+  ) => {    
+    const vesting = getVestingState(
       tags[tag].scheme,
       details.state,
       inputHistory,
@@ -183,8 +130,9 @@ const allContracts = await Promise.all(
           contractId,
           environment,
         ),
-    )
-  ),
+    );
+    return vesting;
+  }),
 );
 
 console.log(allContracts);
