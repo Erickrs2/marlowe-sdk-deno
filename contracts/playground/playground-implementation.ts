@@ -9,6 +9,7 @@ import {
   datetoTimeout,
   Environment,
   IChoice,
+  IDeposit,
   Input,
   lovelace,
   MarloweState,
@@ -130,7 +131,7 @@ export function mkContract(
         case: {
           party: request.provider,
           of_token: lovelace,
-          into_account: request.claimer,
+          into_account: request.provider,
           deposits: request.scheme.amount,
         },
       },
@@ -324,10 +325,18 @@ export const getVestingState = async (
     };
 
    // Initial Deposit Phase
+   const isDeposited = 1 ===
+      inputHistory
+        .filter((input) => G.IDeposit.is(input))
+        .map((input) => input as IDeposit)
+        .filter((deposit) => deposit.that_deposits === 10000000n)
+        .length;
    if (
     // before deposit deadline and deposit < initial deposit
     state?.accounts.length == 1 &&
-    now < initialDepositDeadline    
+    now < initialDepositDeadline &&
+    !isDeposited
+     
   ) {
     const depositInput =
       next.applicable_inputs.deposits.length == 1

@@ -10,11 +10,21 @@ import "$std/dotenv/load.ts";
 import {
   addressBech32,
   ContractId,
+  contractId,
   stakeAddressBech32,
   Tags,
 } from "@marlowe.io/runtime-core";
 import { Input } from "@marlowe.io/language-core-v1";
 import { getVestingState } from "@/contracts/playground/playground-implementation.ts";
+import { Contract } from "@/contracts/playground/type.ts";
+import { VestingState } from "@/contracts/playground/playground-implementation.ts";
+import { WaitingDepositByProvider } from "@/contracts/playground/playground-implementation.ts";
+import { NoDepositBeforeDeadline } from "@/contracts/playground/playground-implementation.ts";
+import { VestingEnded } from "@/contracts/playground/playground-implementation.ts";
+import { Closed } from "@/contracts/playground/playground-implementation.ts";
+
+type UserIntention = "Deposit" | undefined;
+const userIntention = undefined;
 
 const projectId = Deno.env.get("PROJECTID");
 
@@ -33,7 +43,7 @@ const claimer = addressBech32(
 // );
 
 //set TAG
-const tag = "vesting-contract";
+const tag = "vesting-contract1";
 
 //initialize the runtime
 const runtimeURL =
@@ -116,7 +126,7 @@ const contractIdsAndDetailsAndInputHistory = await Promise.all(
   ),
 );
 
-const allContracts = await Promise.all(
+const allContracts: Contract<VestingState>[] = await Promise.all(
   contractIdsAndDetailsAndInputHistory.map((
     [contractId, tags, details, inputHistory],
   ) =>
@@ -130,8 +140,53 @@ const allContracts = await Promise.all(
           contractId,
           environment,
         ),
-    ).then((state) => console.log(state))
+    ).then((
+      state,
+    ) => ({
+      contractId: contractId,
+      providerId: tags[tag].providerId,
+      title: tags[tag].title ? tags[tag].title : "",
+      claimer: {
+        firstName: tags[tag].firstName,
+        lastName: tags[tag].lastName,
+        id: tags[tag].claimerId,
+      },
+      state: state,
+    } as Contract<VestingState>))
   ),
 );
 
+const contractsWaitingForDeposit = allContracts
+  .filter((c) => c.state?.name === "WaitingDepositByProvider")
+  .map((c) => c as Contract<WaitingDepositByProvider>);
 
+const contractsNoDepositBeforeDeadline = allContracts
+  .filter((c) => c.state?.name === "NoDepositBeforeDeadline")
+  .map((c) => c as Contract<NoDepositBeforeDeadline>);
+
+const contractsVestingEnded = allContracts
+  .filter((c) => c.state?.name === "VestingEnded")
+  .map((c) => c as Contract<VestingEnded>);
+
+const newContractsClosed = allContracts
+  .filter((c) => c.state?.name === "Closed")
+  .map((c) => c as Contract<Closed>);
+
+console.log("AllContracts", allContracts);
+// console.log(
+//   "ContractsNoDepositBeforeDeadline",
+//   contractsNoDepositBeforeDeadline,
+// );
+// console.log("ContractsVestingEnded", contractsVestingEnded);
+// console.log("newContractsClosed", newContractsClosed);
+// console.log("ContractsWaitingForDeposit", contractsWaitingForDeposit);
+
+if (userIntention === "Deposit") {
+  const txId = lifecycle.contracts.applyInputs(
+    // @ts-ignore
+    contractId(
+      "159ac12f9fbfa2f4555cc4c6e0871adb8b33484fae96bd4ce642c38752dbf27f#1",
+    ),
+    { inputs: contractsWaitingForDeposit[0].state.depositInput },
+  );
+}
