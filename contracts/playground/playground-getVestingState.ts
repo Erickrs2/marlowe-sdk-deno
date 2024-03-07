@@ -119,8 +119,8 @@ const contractIdsAndDetailsAndInputHistory = await Promise.all(
 const allContracts = await Promise.all(
   contractIdsAndDetailsAndInputHistory.map((
     [contractId, tags, details, inputHistory],
-  ) => {    
-    const vesting = getVestingState(
+  ) =>
+    getVestingState(
       tags[tag].scheme,
       details.state,
       inputHistory,
@@ -130,40 +130,8 @@ const allContracts = await Promise.all(
           contractId,
           environment,
         ),
-    );
-    return vesting;
-  }),
+    ).then((state) => console.log(state))
+  ),
 );
 
-console.log(allContracts);
 
-// const nowTime = datetoTimeout(new Date(Date.now()));
-// const inOneMinute = datetoTimeout(
-//   new Date(Date.now() + 1 * 60 * 1000),
-// );
-// const env: Environment = {
-//   timeInterval: { from: nowTime, to: inOneMinute },
-// };
-
-// const allContracts = await Promise.all(
-//   contractIdsAndDetailsAndInputHistory.map((
-//     [contractId, tags, details, inputHistory],
-//   ) =>
-//     lifecycle.contracts.getApplicableInputs(
-//       // @ts-ignore
-//       contractId,
-//       env,
-//     )
-//       .then((applicables) =>
-//         [contractId, tags, details, inputHistory, applicables] as [
-//           ContractId,
-//           Tags,
-//           ContractDetails,
-//           Input[],
-//           Next,
-//         ]
-//       )
-//   ),
-// );
-
-// console.log(allContracts);
