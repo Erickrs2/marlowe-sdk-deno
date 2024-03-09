@@ -33,7 +33,7 @@ const claimer = addressBech32(
 // );
 
 //set TAG
-const tag = "vesting-contract1";
+const tag = "vesting-contract2";
 
 //set amount
 const amount = 10n;
@@ -65,7 +65,7 @@ const addresses = await lifecycle.wallet.getUsedAddresses();
 const address = addresses[0];
 
 //setting the parameters
-const startTimeout = new Date(Date.now() + 1 * 60 * 60 * 1000);
+const startTimeout = new Date(Date.now() + 1 * 3 * 60 * 1000);
 
 const requestScheme: VestingScheme = {
   startTimeout: startTimeout,

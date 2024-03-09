@@ -75,7 +75,7 @@ export function mkContract(
   request: VestingRequest,
 ): Contract {
   const startLimit = datetoTimeout(request.scheme.startTimeout);
-  const vestingDate = startLimit + (1n * 60n * 60n * 1000n);
+  const vestingDate = startLimit + (1n * 3n * 60n * 1000n);
   const expirationDate = vestingDate + (1n * 60n * 60n * 1000n);
 
   const contract: Contract = {
@@ -143,7 +143,20 @@ export function mkContract(
   return contract;
 }
 
-export type VestingState = Closed | NoDepositBeforeDeadline | VestingEnded | WaitingDepositByProvider | undefined;
+export type VestingState =
+  | Closed
+  | NoDepositBeforeDeadline
+  | VestingEnded
+  | UnknownState
+  | WaitingDepositByProvider
+  | WithinVestingPeriod;
+
+export type UnknownState = {
+  name: "UnknownState";
+  scheme: VestingScheme;
+  state: MarloweState;
+  next: Next;
+};
 
 /**
  *  where The contract has been created. But no inputs has been applied yet.
@@ -225,6 +238,13 @@ export type UnknownCloseCondition = {
   inputHistory: Input[];
 };
 
+export type WithinVestingPeriod = {
+  name: "WithinVestingPeriod";
+  scheme: VestingScheme;
+  cancelInput?: Input[];
+  withdrawInput?: Input[];
+};
+
 export const getVestingState = async (
   scheme: VestingScheme,
   state: MarloweState,
@@ -281,19 +301,21 @@ export const getVestingState = async (
   }
 
   const startTimeout: Timeout = datetoTimeout(new Date(scheme.startTimeout));
-  const periodInMilliseconds: bigint = 1n * 60n * 60n * 1000n;
+  const periodInMilliseconds: bigint = 1n * 3n * 60n * 1000n;
 
   // Provider needs to deposit before the first vesting period
   const initialDepositDeadline: Timeout = startTimeout;
   const now = datetoTimeout(new Date());
-  const periodInterval: [Date, Date] = [
+  const startTimeoutInterval: [Date, Date] = [
     timeoutToDate(startTimeout - periodInMilliseconds + 1n),
     timeoutToDate(
       startTimeout - 1n,
     ),
   ];
 
-  const environment = mkEnvironment(periodInterval[0])(periodInterval[1]);
+  const environment = mkEnvironment(startTimeoutInterval[0])(
+    startTimeoutInterval[1],
+  );
   const next = await getNext(environment);
 
   if (
@@ -316,37 +338,89 @@ export const getVestingState = async (
     // can reduce, periods have passed.
     next.can_reduce &&
     emptyApplicables(next)
-  )
+  ) {
     return {
       name: "VestingEnded",
       quantities: scheme.amount,
       scheme: scheme,
       withdrawInput: [],
     };
+  }
 
-   // Initial Deposit Phase
-   const isDeposited = 1 ===
-      inputHistory
-        .filter((input) => G.IDeposit.is(input))
-        .map((input) => input as IDeposit)
-        .filter((deposit) => deposit.that_deposits === 10000000n)
-        .length;
-   if (
+  // Initial Deposit Phase
+  const isDeposited = 0 ===
+    inputHistory
+      .filter((input) => G.IDeposit.is(input))
+      .length;
+
+  if (
     // before deposit deadline and deposit < initial deposit
     state?.accounts.length == 1 &&
     now < initialDepositDeadline &&
-    !isDeposited
-     
+    isDeposited
   ) {
-    const depositInput =
-      next.applicable_inputs.deposits.length == 1
-        ? [Deposit.toInput(next.applicable_inputs.deposits[0])]
-        : undefined;
+    const depositInput = next.applicable_inputs.deposits.length == 1
+      ? [Deposit.toInput(next.applicable_inputs.deposits[0])]
+      : undefined;
     return {
       name: "WaitingDepositByProvider",
       scheme: scheme,
       initialDepositDeadline: timeoutToDate(initialDepositDeadline),
       depositInput: depositInput,
     };
-  }  
+  }
+
+  const firstCancelTimeoutInterval: [Date, Date] = [
+    timeoutToDate(startTimeout + 1n),
+    timeoutToDate(
+      startTimeout + periodInMilliseconds - 1n,
+    ),
+  ];
+
+  const environmentFirstCancel = mkEnvironment(firstCancelTimeoutInterval[0])(
+    firstCancelTimeoutInterval[1],
+  );
+  const nextFirstCancel = await getNext(environmentFirstCancel);
+
+  if (
+    nextFirstCancel.applicable_inputs.choices.length == 1 &&
+    nextFirstCancel.applicable_inputs.choices[0].for_choice.choice_name ==
+      "cancel" &&
+    now <= (startTimeout + periodInMilliseconds)
+  ) {
+    return {
+      name: "WithinVestingPeriod",
+      scheme: scheme,
+      cancelInput: [
+        Choice.toInput(nextFirstCancel.applicable_inputs.choices[0])(0n),
+      ],
+    };
+  }
+
+  const secondCancelTimeoutInterval: [Date, Date] = [
+    timeoutToDate(startTimeout + periodInMilliseconds + 1n),
+    timeoutToDate(
+      startTimeout + 2n*periodInMilliseconds - 1n,
+    ),
+  ];
+
+  const environmentSecondCancel = mkEnvironment(secondCancelTimeoutInterval[0])(
+    secondCancelTimeoutInterval[1],
+  );
+  const nextSecondCancel = await getNext(environmentSecondCancel);
+
+  if (nextSecondCancel.applicable_inputs.choices.length === 2) {
+    return {
+      name: "WithinVestingPeriod",
+      scheme: scheme,
+      cancelInput: [
+        Choice.toInput(nextSecondCancel.applicable_inputs.choices[1])(1n),
+      ],
+      withdrawInput: [
+        Choice.toInput(nextSecondCancel.applicable_inputs.choices[0])(0n),
+      ],
+    };
+  }
+
+  return { name: "UnknownState", scheme: scheme, state: state, next: next };
 };

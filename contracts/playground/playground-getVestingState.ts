@@ -20,10 +20,10 @@ import { Contract } from "@/contracts/playground/type.ts";
 import { VestingState } from "@/contracts/playground/playground-implementation.ts";
 import { WaitingDepositByProvider } from "@/contracts/playground/playground-implementation.ts";
 import { NoDepositBeforeDeadline } from "@/contracts/playground/playground-implementation.ts";
-import { VestingEnded } from "@/contracts/playground/playground-implementation.ts";
-import { Closed } from "@/contracts/playground/playground-implementation.ts";
+import { VestingEnded, WithinVestingPeriod } from "@/contracts/playground/playground-implementation.ts";
+import { Closed, UnknownState } from "@/contracts/playground/playground-implementation.ts";
 
-type UserIntention = "Deposit" | undefined;
+type UserIntention = "Deposit" | "Cancel" | "Withdraw" | undefined;
 const userIntention = undefined;
 
 const projectId = Deno.env.get("PROJECTID");
@@ -33,17 +33,8 @@ const projectId = Deno.env.get("PROJECTID");
 //Eternl and Lace wallet
 const seedPhrase = Deno.env.get("SEEDPHRASELACE");
 
-//Eternl and Nami wallet
-const claimer = addressBech32(
-  "addr_test1qzscf4np7r463twwrhxfnz4t0ce5vt07wq39v92erjwq0s6wladqsndw3y6r3t5ra7ecys6uplm0glyx24kvfm9t5x8sxt497z",
-);
-//Eternl and Lace wallet
-// const claimer = addressBech32(
-//   "addr_test1qqp0gher3aeyvvvntx68xc85dkz98nlk2tqv6eqc07we2tgcrxu378rj6ztjmftl0dlz2ahtq63gl5my7sz6stt0p36q3rzswz",
-// );
-
 //set TAG
-const tag = "vesting-contract1";
+const tag = "vesting-contract2";
 
 //initialize the runtime
 const runtimeURL =
@@ -156,6 +147,10 @@ const allContracts: Contract<VestingState>[] = await Promise.all(
   ),
 );
 
+const contractsWithinVestingPeriod = allContracts
+  .filter((c) => c.state?.name === "WithinVestingPeriod")
+  .map((c) => c as Contract<WithinVestingPeriod>);
+
 const contractsWaitingForDeposit = allContracts
   .filter((c) => c.state?.name === "WaitingDepositByProvider")
   .map((c) => c as Contract<WaitingDepositByProvider>);
@@ -168,25 +163,47 @@ const contractsVestingEnded = allContracts
   .filter((c) => c.state?.name === "VestingEnded")
   .map((c) => c as Contract<VestingEnded>);
 
-const newContractsClosed = allContracts
+const contractsClosed = allContracts
   .filter((c) => c.state?.name === "Closed")
   .map((c) => c as Contract<Closed>);
 
-console.log("AllContracts", allContracts);
-// console.log(
-//   "ContractsNoDepositBeforeDeadline",
-//   contractsNoDepositBeforeDeadline,
-// );
-// console.log("ContractsVestingEnded", contractsVestingEnded);
-// console.log("newContractsClosed", newContractsClosed);
-// console.log("ContractsWaitingForDeposit", contractsWaitingForDeposit);
+const unknownContracts = allContracts
+  .filter((c) => c.state?.name === "UnknownState")
+  .map((c) => c as Contract<UnknownState>);
 
-if (userIntention === "Deposit") {
+console.log("ContractsWithinVestingPeriod", contractsWithinVestingPeriod);
+console.log(
+  "ContractsNoDepositBeforeDeadline",
+  contractsNoDepositBeforeDeadline,
+);
+console.log("ContractsVestingEnded", contractsVestingEnded);
+console.log("contractsClosed", contractsClosed);
+console.log("ContractsWaitingForDeposit", contractsWaitingForDeposit);
+console.log("UnknownContracts", unknownContracts);
+
+if (userIntention === "Deposit" && contractsWaitingForDeposit.length > 0) {
+  const position = 0;
   const txId = lifecycle.contracts.applyInputs(
     // @ts-ignore
-    contractId(
-      "159ac12f9fbfa2f4555cc4c6e0871adb8b33484fae96bd4ce642c38752dbf27f#1",
-    ),
-    { inputs: contractsWaitingForDeposit[0].state.depositInput },
+    contractsWaitingForDeposit[position].contractId,
+    { inputs: contractsWaitingForDeposit[position].state.depositInput },
+  );
+}
+
+if (userIntention === "Cancel" && contractsWithinVestingPeriod.length > 0) {
+  const position = 0;
+  const txId = lifecycle.contracts.applyInputs(
+    // @ts-ignore
+    contractsWithinVestingPeriod[position].contractId,
+    { inputs: contractsWithinVestingPeriod[position].state.cancelInput },
+  );
+}
+
+if (userIntention === "Withdraw" && contractsWithinVestingPeriod.length > 0) {
+  const position = 0;
+  const txId = lifecycle.contracts.applyInputs(
+    // @ts-ignore
+    contractsWithinVestingPeriod[position].contractId,
+    { inputs: contractsWithinVestingPeriod[position].state.cancelInput },
   );
 }
