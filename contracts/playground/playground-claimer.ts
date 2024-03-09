@@ -1,4 +1,4 @@
-// deno run -A ./contracts/playground/playground-getVestingState.ts
+// deno run -A ./contracts/playground/playground-claimer.ts
 // deno-lint-ignore-file
 
 import { Blockfrost, Lucid } from "lucid-cardano";
@@ -20,21 +20,25 @@ import { Contract } from "@/contracts/playground/type.ts";
 import { VestingState } from "@/contracts/playground/playground-implementation.ts";
 import { WaitingDepositByProvider } from "@/contracts/playground/playground-implementation.ts";
 import { NoDepositBeforeDeadline } from "@/contracts/playground/playground-implementation.ts";
-import { VestingEnded, WithinVestingPeriod } from "@/contracts/playground/playground-implementation.ts";
-import { Closed, UnknownState } from "@/contracts/playground/playground-implementation.ts";
+import {
+  VestingEnded,
+  WithinVestingPeriod,
+} from "@/contracts/playground/playground-implementation.ts";
+import {
+  Closed,
+  UnknownState,
+} from "@/contracts/playground/playground-implementation.ts";
 
-type UserIntention = "Deposit" | "Cancel" | "Withdraw" | undefined;
+type UserIntention = "Withdraw" | undefined;
 const userIntention = undefined;
 
 const projectId = Deno.env.get("PROJECTID");
 
 //Eternl and Nami wallet
-// const seedPhrase = Deno.env.get("SEEDPHRASE");
-//Eternl and Lace wallet
-const seedPhrase = Deno.env.get("SEEDPHRASELACE");
+const seedPhrase = Deno.env.get("SEEDPHRASE");
 
 //set TAG
-const tag = "vesting-contract2";
+const tag = "vesting-contract6";
 
 //initialize the runtime
 const runtimeURL =
@@ -70,7 +74,7 @@ const contractIdsAndTags: [ContractId, Tags][] = (await restAPI.getContracts({
   tags: [tag],
 }))
   .contracts
-  .filter((contract) => contract.tags[tag].providerId === address.slice(0, 18))
+  .filter((contract) => contract.tags[tag].claimerId === address.slice(0, 18))
   .map((contract) => [contract.contractId, contract.tags]);
 
 //get contract IDs, Tags and Details
@@ -181,29 +185,11 @@ console.log("contractsClosed", contractsClosed);
 console.log("ContractsWaitingForDeposit", contractsWaitingForDeposit);
 console.log("UnknownContracts", unknownContracts);
 
-if (userIntention === "Deposit" && contractsWaitingForDeposit.length > 0) {
-  const position = 0;
-  const txId = lifecycle.contracts.applyInputs(
-    // @ts-ignore
-    contractsWaitingForDeposit[position].contractId,
-    { inputs: contractsWaitingForDeposit[position].state.depositInput },
-  );
-}
-
-if (userIntention === "Cancel" && contractsWithinVestingPeriod.length > 0) {
-  const position = 0;
-  const txId = lifecycle.contracts.applyInputs(
-    // @ts-ignore
-    contractsWithinVestingPeriod[position].contractId,
-    { inputs: contractsWithinVestingPeriod[position].state.cancelInput },
-  );
-}
-
 if (userIntention === "Withdraw" && contractsWithinVestingPeriod.length > 0) {
-  const position = 0;
-  const txId = lifecycle.contracts.applyInputs(
+  const txId = await lifecycle.contracts.applyInputs(
     // @ts-ignore
-    contractsWithinVestingPeriod[position].contractId,
-    { inputs: contractsWithinVestingPeriod[position].state.cancelInput },
+    contractsWithinVestingPeriod[0].contractId,
+    { inputs: contractsWithinVestingPeriod[0].state.withdrawInput },
   );
+  console.log("txId", txId);
 }

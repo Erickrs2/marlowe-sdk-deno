@@ -14,6 +14,7 @@ import {
 } from "@marlowe.io/runtime-core";
 
 import { VestingScheme } from "@/contracts/playground/playground-implementation.ts";
+import { periodInMillisecondsInteger } from "@/contracts/playground/playground-implementation.ts";
 
 
 const projectId = Deno.env.get("PROJECTID");
@@ -33,7 +34,7 @@ const claimer = addressBech32(
 // );
 
 //set TAG
-const tag = "vesting-contract2";
+const tag = "vesting-contract6";
 
 //set amount
 const amount = 10n;
@@ -65,7 +66,7 @@ const addresses = await lifecycle.wallet.getUsedAddresses();
 const address = addresses[0];
 
 //setting the parameters
-const startTimeout = new Date(Date.now() + 1 * 3 * 60 * 1000);
+const startTimeout = new Date(Date.now() + periodInMillisecondsInteger);
 
 const requestScheme: VestingScheme = {
   startTimeout: startTimeout,

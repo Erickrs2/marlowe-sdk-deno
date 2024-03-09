@@ -65,6 +65,9 @@ export interface VestingScheme {
   amount: Value;
 }
 
+export const periodInMilliseconds: bigint = 1n * 2n * 60n * 1000n;
+export const periodInMillisecondsInteger = 1 * 2 * 60 * 1000;
+
 /**
  * Function to initialize the playground contract
  * @param {request} VestingRequest
@@ -73,10 +76,10 @@ export interface VestingScheme {
  */
 export function mkContract(
   request: VestingRequest,
-): Contract {
+): Contract {  
   const startLimit = datetoTimeout(request.scheme.startTimeout);
-  const vestingDate = startLimit + (1n * 3n * 60n * 1000n);
-  const expirationDate = vestingDate + (1n * 60n * 60n * 1000n);
+  const vestingDate = startLimit + periodInMilliseconds;
+  const expirationDate = vestingDate + periodInMilliseconds;
 
   const contract: Contract = {
     when: [
@@ -300,8 +303,7 @@ export const getVestingState = async (
     };
   }
 
-  const startTimeout: Timeout = datetoTimeout(new Date(scheme.startTimeout));
-  const periodInMilliseconds: bigint = 1n * 3n * 60n * 1000n;
+  const startTimeout: Timeout = datetoTimeout(new Date(scheme.startTimeout));  
 
   // Provider needs to deposit before the first vesting period
   const initialDepositDeadline: Timeout = startTimeout;
@@ -317,14 +319,19 @@ export const getVestingState = async (
     startTimeoutInterval[1],
   );
   const next = await getNext(environment);
-
+  
+  // Initial Deposit Phase
+  const isDeposited = 1 ===
+    inputHistory
+      .filter((input) => G.IDeposit.is(input))
+      .length;
+  
   if (
     // Passed the deadline, can reduce , deposit == min utxo
-    now > initialDepositDeadline &&
-    next.can_reduce &&
-    emptyApplicables(next) &&
+    now > initialDepositDeadline &&     
     state?.accounts.length === 1 &&
-    state?.accounts[0][1] <= 3_000_000n // min utxo
+    state?.accounts[0][1] <= 3_000_000n && 
+    isDeposited
   ) {
     return {
       name: "NoDepositBeforeDeadline",
@@ -334,10 +341,17 @@ export const getVestingState = async (
     };
   }
 
+  const noChoice = 0 ===
+      inputHistory
+        .filter((input) => G.IChoice.is(input))
+        .map((input) => input as IChoice)
+        .filter((choice) => choice.for_choice_id.choice_name === "cancel" || choice.for_choice_id.choice_name === "withdraw")
+        .length;
   if (
     // can reduce, periods have passed.
-    next.can_reduce &&
-    emptyApplicables(next)
+    now > initialDepositDeadline + periodInMilliseconds &&   
+    noChoice && 
+    isDeposited        
   ) {
     return {
       name: "VestingEnded",
@@ -348,16 +362,11 @@ export const getVestingState = async (
   }
 
   // Initial Deposit Phase
-  const isDeposited = 0 ===
-    inputHistory
-      .filter((input) => G.IDeposit.is(input))
-      .length;
-
   if (
     // before deposit deadline and deposit < initial deposit
     state?.accounts.length == 1 &&
     now < initialDepositDeadline &&
-    isDeposited
+    !isDeposited
   ) {
     const depositInput = next.applicable_inputs.deposits.length == 1
       ? [Deposit.toInput(next.applicable_inputs.deposits[0])]
