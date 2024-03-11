@@ -34,7 +34,7 @@ const claimer = addressBech32(
 // );
 
 //set TAG
-const tag = "vesting-contract6";
+const tag = "vesting-contract7";
 
 //set amount
 const amount = 10n;

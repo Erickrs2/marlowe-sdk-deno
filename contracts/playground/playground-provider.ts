@@ -30,7 +30,7 @@ import {
 } from "@/contracts/playground/playground-implementation.ts";
 
 type UserIntention = "Deposit" | "Cancel" | undefined;
-const userIntention = undefined;
+const userIntention = "Deposit";
 
 const projectId = Deno.env.get("PROJECTID");
 
@@ -38,7 +38,7 @@ const projectId = Deno.env.get("PROJECTID");
 const seedPhrase = Deno.env.get("SEEDPHRASELACE");
 
 //set TAG
-const tag = "vesting-contract6";
+const tag = "vesting-contract7";
 
 //initialize the runtime
 const runtimeURL =

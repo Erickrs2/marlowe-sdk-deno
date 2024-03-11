@@ -304,10 +304,11 @@ export const getVestingState = async (
   }
 
   const startTimeout: Timeout = datetoTimeout(new Date(scheme.startTimeout));  
-
-  // Provider needs to deposit before the first vesting period
   const initialDepositDeadline: Timeout = startTimeout;
   const now = datetoTimeout(new Date());
+  const currentPeriod: bigint = (now - startTimeout) / periodInMilliseconds;
+  // Provider needs to deposit before the first vesting period
+    
   const startTimeoutInterval: [Date, Date] = [
     timeoutToDate(startTimeout - periodInMilliseconds + 1n),
     timeoutToDate(
@@ -319,7 +320,7 @@ export const getVestingState = async (
     startTimeoutInterval[1],
   );
   const next = await getNext(environment);
-  
+   
   // Initial Deposit Phase
   const isDeposited = 1 ===
     inputHistory
@@ -331,33 +332,13 @@ export const getVestingState = async (
     now > initialDepositDeadline &&     
     state?.accounts.length === 1 &&
     state?.accounts[0][1] <= 3_000_000n && 
-    isDeposited
+    !isDeposited    
   ) {
     return {
       name: "NoDepositBeforeDeadline",
       scheme: scheme,
       initialDepositDeadline: timeoutToDate(initialDepositDeadline),
       payMinUtxoBackInput: [],
-    };
-  }
-
-  const noChoice = 0 ===
-      inputHistory
-        .filter((input) => G.IChoice.is(input))
-        .map((input) => input as IChoice)
-        .filter((choice) => choice.for_choice_id.choice_name === "cancel" || choice.for_choice_id.choice_name === "withdraw")
-        .length;
-  if (
-    // can reduce, periods have passed.
-    now > initialDepositDeadline + periodInMilliseconds &&   
-    noChoice && 
-    isDeposited        
-  ) {
-    return {
-      name: "VestingEnded",
-      quantities: scheme.amount,
-      scheme: scheme,
-      withdrawInput: [],
     };
   }
 
@@ -390,7 +371,7 @@ export const getVestingState = async (
     firstCancelTimeoutInterval[1],
   );
   const nextFirstCancel = await getNext(environmentFirstCancel);
-
+  
   if (
     nextFirstCancel.applicable_inputs.choices.length == 1 &&
     nextFirstCancel.applicable_inputs.choices[0].for_choice.choice_name ==
@@ -417,6 +398,27 @@ export const getVestingState = async (
     secondCancelTimeoutInterval[1],
   );
   const nextSecondCancel = await getNext(environmentSecondCancel);
+    
+  const noChoice = 0 ===
+      inputHistory
+        .filter((input) => G.IChoice.is(input))
+        .map((input) => input as IChoice)
+        .filter((choice) => choice.for_choice_id.choice_name === "cancel" || choice.for_choice_id.choice_name === "withdraw")
+        .length;
+  if (
+    // can reduce, periods have passed.
+    now > initialDepositDeadline + 2n*periodInMilliseconds &&   
+    noChoice && 
+    isDeposited
+           
+  ) {
+    return {
+      name: "VestingEnded",
+      quantities: scheme.amount,
+      scheme: scheme,
+      withdrawInput: [],
+    };
+  }
 
   if (nextSecondCancel.applicable_inputs.choices.length === 2) {
     return {
